@@ -13,6 +13,7 @@ let costReadingDifferenceChart = null; // New chart instance for Cost and Readin
 let costPerKilometerChart = null; // New chart instance for Cost per Kilometer
 let monthlyConsumptionChart = null; // New chart instance for Monthly Consumption
 let pumpReadingDifferencesChart = null; // New chart instance for Pump Reading Differences
+let vehicleFillCountChart = null; // New chart instance for Vehicle Fill Count
 
 // Initialize fuel page
 export function initializeFuelPage() {
@@ -100,7 +101,7 @@ export function renderFuelTable() {
     addFuelActionListeners();
 }
 
-// Initialize fuel table - updated to remove the fuel type distribution chart and update currency
+// Initialize fuel table - updated to add Show/Hide button and hide table initially
 function initializeFuelTable() {
     const fuelPage = document.getElementById('fuel-page');
     if (!fuelPage) return;
@@ -299,6 +300,18 @@ function initializeFuelTable() {
                     <canvas id="vehicle-efficiency-chart"></canvas>
                 </div>
                 
+                <!-- NEW: Vehicles with Highest Fuel Fill Count -->
+                <div class="chart-container full-width" style="margin-bottom: 1.5rem;">
+                    <div class="chart-header">
+                        <h4>Vehicles with Highest Fuel Fill Count</h4>
+                        <div class="chart-actions">
+                            <button class="btn-chart-view active" data-chart="fill-count" data-view="count">Fill Count</button>
+                            <button class="btn-chart-view" data-chart="fill-count" data-view="quantity">Fuel Quantity</button>
+                        </div>
+                    </div>
+                    <canvas id="vehicle-fill-count-chart"></canvas>
+                </div>
+                
                 <!-- NEW: Best & Worst Fuel Efficiency Vehicles Ranking Table -->
                 <div class="chart-container full-width" style="margin-bottom: 1.5rem;">
                     <div class="chart-header">
@@ -316,32 +329,34 @@ function initializeFuelTable() {
 
         <div class="page-header">
             <h3 class="section-title">Fuel Records</h3>
-            <div class="header-actions">
+            <div class="table-actions">
                 <button id="toggle-fuel-table-btn" class="btn btn-secondary">
-                    <i class="fas fa-eye-slash"></i> <span>Show Records</span>
+                    <i class="fas fa-eye"></i> Show Table
                 </button>
                 <button id="add-fuel-btn" class="btn btn-primary">
                     <i class="fas fa-plus"></i> Add Fuel Record
                 </button>
             </div>
         </div>
-        <div class="table-responsive" id="fuel-table-container" style="display: none;">
-            <table class="fuel-records-table">
-                <thead>
-                    <tr>
-                        <th>Vehicle</th>
-                        <th>Date</th>
-                        <th>Driver</th>
-                        <th>Fuel Type</th>
-                        <th>Quantity (L)</th>
-                        <th>Cost (EGP)</th>
-                        <th>Distance (Km)</th>
-                        <th>Consumption (Km/L)</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+        <div class="fuel-table-container" style="display: none;">
+            <div class="table-responsive">
+                <table class="fuel-records-table">
+                    <thead>
+                        <tr>
+                            <th>Vehicle</th>
+                            <th>Date</th>
+                            <th>Driver</th>
+                            <th>Fuel Type</th>
+                            <th>Quantity (L)</th>
+                            <th>Cost (EGP)</th>
+                            <th>Distance (Km)</th>
+                            <th>Consumption (Km/L)</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
         </div>
     `;
     
@@ -376,10 +391,10 @@ function initializeFuelTable() {
         // Add event listeners for branch comparison chart toggle buttons
         initializeBranchComparisonToggle();
         
-        // Setup fuel table toggle button
-        initializeFuelTableToggle();
+        // Initialize the Show/Hide table button
+        initializeTableToggleButton();
         
-        // Render table
+        // Render table (even though it's hidden initially)
         renderFuelTable();
         
         // Apply default filters and render charts AFTER all UI is initialized
@@ -637,7 +652,7 @@ function addFuelActionListeners() {
         });
     });
     
-    // Add fuel button
+    // Add fuel button - Updated to select the correct button
     const addFuelBtn = document.getElementById('add-fuel-btn');
     if (addFuelBtn) {
         addFuelBtn.addEventListener('click', () => {
@@ -894,6 +909,7 @@ function renderFuelCharts(filteredData) {
             displayNoDataMessage('cost-per-km-chart', 'No cost per kilometer data available');
             displayNoDataMessage('monthly-consumption-chart', 'No monthly consumption data available');
             displayNoDataMessage('pump-reading-differences-chart', 'No pump reading differences data available');
+            displayNoDataMessage('vehicle-fill-count-chart', 'No data available for vehicle fuel fill count');
             // Also handle no data for the ranking table
             const rankingTableContainer = document.getElementById('fuel-efficiency-ranking-table');
             if (rankingTableContainer) {
@@ -926,30 +942,36 @@ function renderFuelCharts(filteredData) {
         // Render the new fuel efficiency ranking table
         renderFuelEfficiencyRankingTable(filteredData, 'all');
         
-        // Add event listeners for chart view toggles - updated for efficiency ranking table
+        // Render the Vehicles with Highest Fuel Fill Count chart
+        renderVehicleFillCountChart(filteredData, 'count');
+        
+        // Add event listeners for chart view toggles - updated for new chart
         document.querySelectorAll('.btn-chart-view').forEach(btn => {
             btn.addEventListener('click', function() {
-                const view = this.getAttribute('data-view');
                 const chartType = this.getAttribute('data-chart');
-                const parent = this.closest('.chart-header');
+                const viewType = this.getAttribute('data-view');
                 
-                // Remove active class from all buttons in this group
-                parent.querySelectorAll('.btn-chart-view').forEach(b => b.classList.remove('active'));
+                // Remove active class from all buttons with the same chart type
+                document.querySelectorAll(`.btn-chart-view[data-chart="${chartType}"]`).forEach(button => {
+                    button.classList.remove('active');
+                });
                 
                 // Add active class to clicked button
                 this.classList.add('active');
                 
-                // Update chart based on view and chart type
+                // Render appropriate chart based on type and view
                 if (chartType === 'consumption') {
-                    renderConsumptionTrendChart(filteredData, view);
+                    renderConsumptionTrendChart(filteredData, viewType);
                 } else if (chartType === 'cost-reading') {
-                    renderCostReadingDifferenceChart(filteredData, view, 'all');
-                } else if (chartType === 'cost-per-km') {
-                    renderCostPerKilometerChart(filteredData, view);
-                } else if (chartType === 'monthly-consumption') {
-                    renderMonthlyConsumptionChart(filteredData, view);
+                    renderCostReadingDifferenceChart(filteredData, viewType);
                 } else if (chartType === 'efficiency-ranking') {
-                    renderFuelEfficiencyRankingTable(filteredData, view);
+                    renderFuelEfficiencyRankingTable(filteredData, viewType);
+                } else if (chartType === 'cost-per-km') {
+                    renderCostPerKilometerChart(filteredData, viewType);
+                } else if (chartType === 'monthly-consumption') {
+                    renderMonthlyConsumptionChart(filteredData, viewType);
+                } else if (chartType === 'fill-count') {
+                    renderVehicleFillCountChart(filteredData, viewType);
                 }
             });
         });
@@ -2297,6 +2319,11 @@ export function updateChartsForDarkMode(isDarkMode) {
         updateChartColors(monthlyConsumptionChart, isDarkMode);
     }
     
+    // Update the Vehicles with Highest Fuel Fill Count chart
+    if (vehicleFillCountChart) {
+        updateChartColors(vehicleFillCountChart, isDarkMode);
+    }
+    
     // Add to global charts collection for dark mode handling
     if (typeof charts === 'object') {
         if (fuelConsumptionChart) charts.fuelConsumption = fuelConsumptionChart;
@@ -2306,6 +2333,7 @@ export function updateChartsForDarkMode(isDarkMode) {
         if (costReadingDifferenceChart) charts.costReadingDifference = costReadingDifferenceChart;
         if (costPerKilometerChart) charts.costPerKilometer = costPerKilometerChart;
         if (monthlyConsumptionChart) charts.monthlyConsumption = monthlyConsumptionChart;
+        if (vehicleFillCountChart) charts.vehicleFillCount = vehicleFillCountChart;
         charts.branchPerformance = branchPerformanceChart;
     }
 }
@@ -3784,7 +3812,21 @@ function getMonthlyConsumptionVehicles(data) {
     // Filter vehicles with at least 2 months of data and sort by total fuel consumption
     const vehicles = Array.from(vehicleMap.values())
         .filter(vehicle => vehicle.months.size >= 2)
-        .sort((a, b) => b.totalFuel - a.totalFuel); // Sort by total fuel consumption (descending)
+        .sort((a, b) => {
+            // Sort by total fuel consumption (descending)
+            let totalFuelA = 0;
+            let totalFuelB = 0;
+            
+            for (const [_, monthData] of a.months.entries()) {
+                totalFuelA += monthData.totalFuel;
+            }
+            
+            for (const [_, monthData] of b.months.entries()) {
+                totalFuelB += monthData.totalFuel;
+            }
+            
+            return totalFuelB - totalFuelA;
+        });
     
     return {
         vehicles: vehicles,
@@ -4644,48 +4686,333 @@ function calculateFuelEfficiencyRanking(data) {
     }
 }
 
-// Initialize fuel table toggle functionality
-function initializeFuelTableToggle() {
-    const toggleButton = document.getElementById('toggle-fuel-table-btn');
-    const tableContainer = document.getElementById('fuel-table-container');
-    
-    if (!toggleButton || !tableContainer) {
-        console.error('Cannot find fuel table toggle button or table container');
+// New function to render the Vehicles with Highest Fuel Fill Count chart
+function renderVehicleFillCountChart(data, viewMode = 'count') {
+    const canvas = document.getElementById('vehicle-fill-count-chart');
+    if (!canvas) {
+        console.error('Cannot find vehicle-fill-count-chart canvas');
         return;
     }
     
-    // Check if there's a saved preference in localStorage
-    const isTableVisible = localStorage.getItem('fuelTableVisible') === 'true';
+    // Check if Chart.js is available
+    if (typeof Chart === 'undefined') {
+        console.error('Chart.js is not loaded. Cannot render vehicle fill count chart.');
+        return;
+    }
     
-    // Set the initial state based on localStorage or default to hidden
-    tableContainer.style.display = isTableVisible ? 'block' : 'none';
-    updateToggleButtonText(toggleButton, isTableVisible);
-    
-    // Add click event listener to the toggle button
-    toggleButton.addEventListener('click', function() {
-        // Toggle the table visibility
-        const isCurrentlyVisible = tableContainer.style.display === 'block';
-        const newVisibility = !isCurrentlyVisible;
+    try {
+        console.log('Rendering Vehicles with Highest Fuel Fill Count chart with', data.length, 'records, view mode:', viewMode);
         
-        // Update the UI
-        tableContainer.style.display = newVisibility ? 'block' : 'none';
-        updateToggleButtonText(toggleButton, newVisibility);
+        // Calculate data for the chart
+        const chartData = calculateVehicleFillCountData(data, viewMode);
         
-        // Save the preference to localStorage
-        localStorage.setItem('fuelTableVisible', newVisibility);
-    });
+        // If no data, show message
+        if (!chartData || !chartData.labels || chartData.labels.length === 0) {
+            displayNoDataMessage('vehicle-fill-count-chart', 'No data available for vehicle fuel fill count');
+            return;
+        }
+
+        // Destroy existing chart if it exists
+        if (vehicleFillCountChart) {
+            vehicleFillCountChart.destroy();
+        }
+        
+        // Determine if dark mode is active for chart colors
+        const isDarkMode = document.body.classList.contains('dark-mode');
+        const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+        const textColor = isDarkMode ? '#e0e0e0' : '#666';
+        
+        // Generate gradient colors for bars
+        const backgroundColors = chartData.data.map((_, index) => {
+            const ctx = canvas.getContext('2d');
+            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            
+            // Create color gradient based on position in the list (ranked)
+            const hue = 220 - (index * 8); // From blue to purple
+            gradient.addColorStop(0, `hsla(${hue}, 80%, 60%, 0.8)`);
+            gradient.addColorStop(1, `hsla(${hue}, 80%, 40%, 0.5)`);
+            
+            return gradient;
+        });
+        
+        // Create horizontal bar chart
+        vehicleFillCountChart = new Chart(canvas, {
+            type: 'bar',
+            data: {
+                labels: chartData.labels,
+                datasets: [{
+                    label: viewMode === 'count' ? 'Number of Fuel Fills' : 'Total Fuel Quantity (L)',
+                    data: chartData.data,
+                    backgroundColor: backgroundColors,
+                    borderColor: chartData.data.map((_, index) => {
+                        const hue = 220 - (index * 8);
+                        return `hsla(${hue}, 80%, 50%, 1)`;
+                    }),
+                    borderWidth: 1,
+                    barPercentage: 0.8,
+                }]
+            },
+            options: {
+                indexAxis: 'y', // Horizontal bar chart
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            color: textColor,
+                            font: {
+                                family: 'Cairo, Arial, sans-serif'
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            title: function(context) {
+                                return chartData.fullNames[context[0].dataIndex];
+                            },
+                            label: function(context) {
+                                const value = context.raw;
+                                const vehicleIndex = context.dataIndex;
+                                
+                                if (viewMode === 'count') {
+                                    return [
+                                        `Fill Count: ${value}`,
+                                        `Total Fuel Quantity: ${chartData.quantities[vehicleIndex].toFixed(2)} L`,
+                                        `Total Distance: ${chartData.distances[vehicleIndex].toFixed(0)} Km`,
+                                        `Average Fill: ${(chartData.quantities[vehicleIndex] / value).toFixed(1)} L`
+                                    ];
+                                } else {
+                                    return [
+                                        `Total Fuel Quantity: ${value.toFixed(2)} L`,
+                                        `Fill Count: ${chartData.counts[vehicleIndex]}`,
+                                        `Total Distance: ${chartData.distances[vehicleIndex].toFixed(0)} Km`,
+                                        `Average Fill: ${(value / chartData.counts[vehicleIndex]).toFixed(1)} L`
+                                    ];
+                                }
+                            }
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: viewMode === 'count' ? 
+                            'Vehicles with Highest Fuel Fill Count' : 
+                            'Vehicles with Highest Fuel Consumption',
+                        color: textColor,
+                        font: {
+                            size: 16,
+                            family: 'Cairo, Arial, sans-serif'
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: viewMode === 'count' ? 'Number of Fills' : 'Fuel Quantity (L)',
+                            color: textColor,
+                            font: {
+                                family: 'Cairo, Arial, sans-serif'
+                            }
+                        },
+                        grid: {
+                            color: gridColor
+                        },
+                        ticks: {
+                            color: textColor,
+                            font: {
+                                family: 'Cairo, Arial, sans-serif'
+                            },
+                            callback: function(value) {
+                                if (viewMode === 'count') {
+                                    return value; // Just show the count
+                                } else {
+                                    return value.toFixed(0) + ' L'; // Format fuel quantity
+                                }
+                            }
+                        },
+                        beginAtZero: true
+                    },
+                    y: {
+                        grid: {
+                            color: gridColor
+                        },
+                        ticks: {
+                            color: textColor,
+                            font: {
+                                family: 'Cairo, Arial, sans-serif'
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Show canvas
+        canvas.style.display = 'block';
+        
+        // Remove any no-data message
+        const container = canvas.parentElement;
+        const noDataMessage = container.querySelector('.no-data-message');
+        if (noDataMessage) {
+            noDataMessage.remove();
+        }
+        
+        // Add to global charts collection
+        if (typeof charts === 'object') {
+            charts.vehicleFillCount = vehicleFillCountChart;
+        }
+        
+        console.log(`Vehicle Fill Count chart rendered in ${viewMode} mode with ${chartData.labels.length} vehicles`);
+    } catch (error) {
+        console.error('Error rendering Vehicle Fill Count chart:', error);
+        displayNoDataMessage('vehicle-fill-count-chart', 'Error rendering vehicle fuel fill count chart');
+    }
 }
 
-// Helper function to update the toggle button text
-function updateToggleButtonText(button, isTableVisible) {
-    const iconElement = button.querySelector('i');
-    const textElement = button.querySelector('span');
-    
-    if (isTableVisible) {
-        iconElement.className = 'fas fa-eye-slash';
-        textElement.textContent = 'Hide Records';
-    } else {
-        iconElement.className = 'fas fa-eye';
-        textElement.textContent = 'Show Records';
+// Function to calculate data for the Vehicle Fill Count chart
+function calculateVehicleFillCountData(data, viewMode) {
+    try {
+        // Map to store aggregated data per vehicle
+        const vehicles = new Map();
+        
+        // Process all records
+        data.forEach(record => {
+            // Get vehicle identifiers
+            const vehicleId = record['Vehicle ID'] || record.vehicle;
+            let licensePlate = record['License Plate'] || '';
+            
+            // If license plate is not in the record, try to find it from the vehicles array
+            if (!licensePlate && vehicleId && window.vehicles) {
+                const vehicleInfo = window.vehicles.find(v => 
+                    v['Vehicle ID'] === vehicleId || 
+                    v.id === vehicleId || 
+                    v['Vehicle VIN/SN'] === vehicleId
+                );
+                
+                if (vehicleInfo) {
+                    licensePlate = vehicleInfo['License Plate'] || '';
+                }
+            }
+            
+            // Create a unique identifier for the vehicle
+            const vehicleKey = vehicleId || 'Unknown';
+            const displayName = licensePlate ? licensePlate : `Vehicle ${vehicleId}`;
+            
+            // Skip if no key
+            if (vehicleKey === 'Unknown') return;
+            
+            // Parse fuel quantity and distance
+            const fuelQuantity = parseFloat(record.Quantity) || 0;
+            const distance = parseFloat(record.Distance) || 0;
+            
+            // Skip invalid records with no fuel quantity
+            if (fuelQuantity <= 0) return;
+            
+            // Initialize or update vehicle data
+            if (!vehicles.has(vehicleKey)) {
+                vehicles.set(vehicleKey, {
+                    id: vehicleKey,
+                    displayName: displayName,
+                    count: 0,
+                    totalQuantity: 0,
+                    totalDistance: 0
+                });
+            }
+            
+            // Update totals
+            const vehicleData = vehicles.get(vehicleKey);
+            vehicleData.count++;
+            vehicleData.totalQuantity += fuelQuantity;
+            
+            // Add distance if valid
+            if (distance > 0) {
+                vehicleData.totalDistance += distance;
+            }
+        });
+        
+        // Convert to arrays and sort based on view mode
+        let sortedVehicles;
+        
+        if (viewMode === 'count') {
+            // Sort by number of fill ups (descending)
+            sortedVehicles = Array.from(vehicles.values())
+                .filter(v => v.count > 0)
+                .sort((a, b) => b.count - a.count);
+        } else {
+            // Sort by total fuel quantity (descending)
+            sortedVehicles = Array.from(vehicles.values())
+                .filter(v => v.totalQuantity > 0)
+                .sort((a, b) => b.totalQuantity - a.totalQuantity);
+        }
+        
+        // Take top 15 for better visualization
+        const topVehicles = sortedVehicles.slice(0, 15);
+        
+        // Format data for chart
+        const result = {
+            labels: [],
+            data: [],
+            counts: [],
+            quantities: [],
+            distances: [],
+            fullNames: []
+        };
+        
+        topVehicles.forEach(vehicle => {
+            // Use short name for display in chart
+            result.labels.push(truncateText(vehicle.displayName, 15));
+            
+            // Store full name for tooltip
+            result.fullNames.push(vehicle.displayName);
+            
+            // Store data based on view mode
+            if (viewMode === 'count') {
+                result.data.push(vehicle.count);
+            } else {
+                result.data.push(vehicle.totalQuantity);
+            }
+            
+            // Store additional data for tooltip
+            result.counts.push(vehicle.count);
+            result.quantities.push(vehicle.totalQuantity);
+            result.distances.push(vehicle.totalDistance);
+        });
+        
+        return result;
+    } catch (error) {
+        console.error('Error calculating vehicle fill count data:', error);
+        return {
+            labels: [],
+            data: [],
+            counts: [],
+            quantities: [],
+            distances: [],
+            fullNames: []
+        };
     }
+}
+
+// New function to initialize the table toggle button
+function initializeTableToggleButton() {
+    const toggleButton = document.getElementById('toggle-fuel-table-btn');
+    if (!toggleButton) return;
+    
+    toggleButton.addEventListener('click', function() {
+        const tableContainer = document.querySelector('.fuel-table-container');
+        if (!tableContainer) return;
+        
+        // Toggle visibility
+        const isVisible = tableContainer.style.display !== 'none';
+        
+        if (isVisible) {
+            // Hide the table
+            tableContainer.style.display = 'none';
+            toggleButton.innerHTML = '<i class="fas fa-eye"></i> Show Table';
+        } else {
+            // Show the table
+            tableContainer.style.display = 'block';
+            toggleButton.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Table';
+        }
+    });
 }
