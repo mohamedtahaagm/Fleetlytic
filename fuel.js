@@ -209,58 +209,22 @@ function initializeFuelTable() {
                 </div>
             </div>
             
-            <!-- Modified Cost and Reading Difference Tracking Chart - removed vehicle selector -->
-            <div class="chart-container full-width" style="margin-bottom: 1.5rem;">
-                <div class="chart-header">
-                    <h4>Cost and Reading Difference Tracking</h4>
-                    <div class="chart-actions">
-                        <button class="btn-chart-view active" data-chart="cost-reading" data-view="cost">Cost View</button>
-                        <button class="btn-chart-view" data-chart="cost-reading" data-view="reading">Reading Difference</button>
-                    </div>
-                </div>
-                <canvas id="cost-reading-chart"></canvas>
-            </div>
-            
-            <!-- NEW: Add Monthly Fuel Consumption per Vehicle Chart -->
-            <div class="chart-container full-width" style="margin-bottom: 1.5rem;">
-                <div class="chart-header">
-                    <h4>Average Monthly Fuel Consumption per Vehicle</h4>
-                    <div class="chart-actions">
-                        <div class="vehicle-selector-wrapper" style="margin-right: 15px;">
-                            <select id="monthly-consumption-vehicle-selector" class="chart-vehicle-selector">
-                                <option value="compare">Compare Top Vehicles</option>
-                                <!-- Vehicle options will be populated dynamically -->
-                            </select>
-                        </div>
-                        <button class="btn-chart-view active" data-chart="monthly-consumption" data-view="quantity">Fuel Quantity (L)</button>
-                        <button class="btn-chart-view" data-chart="monthly-consumption" data-view="consumption">Efficiency (Km/L)</button>
-                    </div>
-                </div>
-                <canvas id="monthly-consumption-chart"></canvas>
-            </div>
-            
-            <!-- NEW: Add Fuel Cost per Kilometer Chart -->
-            <div class="chart-container full-width" style="margin-bottom: 1.5rem;">
-                <div class="chart-header">
-                    <h4>Fuel Cost per Kilometer</h4>
-                    <div class="chart-actions">
-                        <button class="btn-chart-view active" data-chart="cost-per-km" data-view="vehicles">By Vehicle</button>
-                        <button class="btn-chart-view" data-chart="cost-per-km" data-view="branches">By Branch</button>
-                    </div>
-                </div>
-                <canvas id="cost-per-km-chart"></canvas>
-            </div>
-            
-            <!-- Pump Reading Differences Chart -->
-            <div class="chart-container full-width" style="margin-bottom: 1.5rem;">
-                <div class="chart-header">
-                    <h4>Pump Reading Differences</h4>
-                </div>
-                <canvas id="pump-reading-differences-chart"></canvas>
-            </div>
-            
             <div class="dashboard-charts">
-                <!-- Main consumption trend chart (full width) -->
+                <!-- REORDERED CHARTS ACCORDING TO REQUEST -->
+                
+                <!-- 1. Fuel Cost per Kilometer Chart -->
+                <div class="chart-container full-width" style="margin-bottom: 1.5rem;">
+                    <div class="chart-header">
+                        <h4>Fuel Cost per Kilometer</h4>
+                        <div class="chart-actions">
+                            <button class="btn-chart-view active" data-chart="cost-per-km" data-view="vehicles">By Vehicle</button>
+                            <button class="btn-chart-view" data-chart="cost-per-km" data-view="branches">By Branch</button>
+                        </div>
+                    </div>
+                    <canvas id="cost-per-km-chart"></canvas>
+                </div>
+                
+                <!-- 2. Fuel Consumption Trend chart -->
                 <div class="chart-container full-width">
                     <div class="chart-header">
                         <h4>Fuel Consumption Trend</h4>
@@ -272,7 +236,23 @@ function initializeFuelTable() {
                     <canvas id="fuel-consumption-chart"></canvas>
                 </div>
                 
-                <!-- NEW: Fuel Performance Comparison Between Branches (full width) -->
+                <!-- 3. Vehicle Efficiency Comparison chart -->
+                <div class="chart-container full-width">
+                    <div class="chart-header">
+                        <h4>Comparison of Fuel Efficiency Among Vehicles</h4>
+                    </div>
+                    <canvas id="vehicle-efficiency-chart"></canvas>
+                </div>
+                
+                <!-- 4. Driver Efficiency Comparison chart -->
+                <div class="chart-container full-width">
+                    <div class="chart-header">
+                        <h4>Comparison of Fuel Efficiency Among Drivers</h4>
+                    </div>
+                    <canvas id="driver-efficiency-chart"></canvas>
+                </div>
+                
+                <!-- 5. Branch Performance Comparison chart -->
                 <div class="chart-container full-width">
                     <div class="chart-header">
                         <h4>Fuel Performance Comparison Between Branches</h4>
@@ -284,23 +264,25 @@ function initializeFuelTable() {
                     <canvas id="branch-performance-chart"></canvas>
                 </div>
                 
-                <!-- Add new Driver Efficiency Comparison chart (full width) -->
-                <div class="chart-container full-width">
+                <!-- 6. Monthly Fuel Consumption per Vehicle Chart -->
+                <div class="chart-container full-width" style="margin-bottom: 1.5rem;">
                     <div class="chart-header">
-                        <h4>Comparison of Fuel Efficiency Among Drivers</h4>
+                        <h4>Average Monthly Fuel Consumption per Vehicle</h4>
+                        <div class="chart-actions">
+                            <div class="vehicle-selector-wrapper" style="margin-right: 15px;">
+                                <select id="monthly-consumption-vehicle-selector" class="chart-vehicle-selector">
+                                    <option value="compare">Compare Top Vehicles</option>
+                                    <!-- Vehicle options will be populated dynamically -->
+                                </select>
+                            </div>
+                            <button class="btn-chart-view active" data-chart="monthly-consumption" data-view="quantity">Fuel Quantity (L)</button>
+                            <button class="btn-chart-view" data-chart="monthly-consumption" data-view="consumption">Efficiency (Km/L)</button>
+                        </div>
                     </div>
-                    <canvas id="driver-efficiency-chart"></canvas>
+                    <canvas id="monthly-consumption-chart"></canvas>
                 </div>
                 
-                <!-- NEW: Vehicle Efficiency Comparison chart (full width) -->
-                <div class="chart-container full-width">
-                    <div class="chart-header">
-                        <h4>Comparison of Fuel Efficiency Among Vehicles</h4>
-                    </div>
-                    <canvas id="vehicle-efficiency-chart"></canvas>
-                </div>
-                
-                <!-- NEW: Vehicles with Highest Fuel Fill Count -->
+                <!-- 7. Vehicles with Highest Fuel Fill Count -->
                 <div class="chart-container full-width" style="margin-bottom: 1.5rem;">
                     <div class="chart-header">
                         <h4>Vehicles with Highest Fuel Fill Count</h4>
@@ -312,7 +294,7 @@ function initializeFuelTable() {
                     <canvas id="vehicle-fill-count-chart"></canvas>
                 </div>
                 
-                <!-- NEW: Best & Worst Fuel Efficiency Vehicles Ranking Table -->
+                <!-- 8. Best & Worst Fuel Efficiency Vehicles Ranking Table -->
                 <div class="chart-container full-width" style="margin-bottom: 1.5rem;">
                     <div class="chart-header">
                         <h4>Best & Worst Fuel Efficiency Vehicles</h4>
@@ -323,6 +305,26 @@ function initializeFuelTable() {
                         </div>
                     </div>
                     <div id="fuel-efficiency-ranking-table" class="ranking-table-container"></div>
+                </div>
+                
+                <!-- 9. Cost and Reading Difference Tracking Chart -->
+                <div class="chart-container full-width" style="margin-bottom: 1.5rem;">
+                    <div class="chart-header">
+                        <h4>Cost and Reading Difference Tracking</h4>
+                        <div class="chart-actions">
+                            <button class="btn-chart-view active" data-chart="cost-reading" data-view="cost">Cost View</button>
+                            <button class="btn-chart-view" data-chart="cost-reading" data-view="reading">Reading Difference</button>
+                        </div>
+                    </div>
+                    <canvas id="cost-reading-chart"></canvas>
+                </div>
+                
+                <!-- 10. Pump Reading Differences Chart -->
+                <div class="chart-container full-width" style="margin-bottom: 1.5rem;">
+                    <div class="chart-header">
+                        <h4>Pump Reading Differences</h4>
+                    </div>
+                    <canvas id="pump-reading-differences-chart"></canvas>
                 </div>
             </div>
         </div>
