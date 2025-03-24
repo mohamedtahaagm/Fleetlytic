@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fleet Management System</title>
+    <meta name="description" content="Comprehensive fleet management system for vehicle tracking, maintenance, and operations">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <!-- Add html2pdf library for PDF export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <!-- PWA Support -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0057ff">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Add SheetJS library for Excel export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <!-- Register Service Worker -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful');
+                    })
+                    .catch(error => {
+                        console.log('ServiceWorker registration failed:', error);
+                    });
+            });
+        }
+    </script>
+</head>
+<body class="login-page">
+    <!-- Login Window -->
+    <div id="login-container" class="login-container">
+        <div class="header">
+            <img src="https://b.top4top.io/p_33161q5ox1.png" alt="Logo" class="light-logo">
+            <img src="https://h.top4top.io/p_3364gj0tv1.png" alt="Logo" class="dark-logo">
+            <h1>Welcome to the fleet management system</h1>
+        </div>
+        <div class="login-box">
+            <h2>Login</h2>
+            <form id="login-form">
+                <div class="input-container">
+                    <i class="fas fa-user icon"></i>
+                    <input type="text" id="email" placeholder="Username" required>
+                </div>
+                <div class="input-container">
+                    <i class="fas fa-lock icon"></i>
+                    <input type="password" id="password" placeholder="Password" required>
+                </div>
+                <div id="login-error" class="error-message" style="display: none;"></div>
+                <button type="button" id="login-btn">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div id="main-container" style="display: none;">
+        <!-- Sidebar -->
+        <div id="sidebar" class="sidebar" style="display: none;">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <img src="https://b.top4top.io/p_33161q5ox1.png" alt="Company Logo" class="light-logo">
+                    <img src="https://h.top4top.io/p_3364gj0tv1.png" alt="Company Logo" class="dark-logo">
+                </div>
+                <div class="user-info">
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="#" data-page="dashboard" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                    <li><a href="#" data-page="vehicles"><i class="fas fa-car"></i> Vehicles</a></li>
+                    <li><a href="#" data-page="maintenance"><i class="fas fa-tools"></i> Maintenance</a></li>
+                    <li><a href="#" data-page="fuel"><i class="fas fa-gas-pump"></i> Fuel</a></li>
+                    <li><a href="#" data-page="drivers"><i class="fas fa-users"></i> Drivers</a></li>
+                    <li><a href="#" data-page="reports"><i class="fas fa-chart-bar"></i> Reports</a></li>
+                    <li class="admin-only"><a href="#" data-page="users"><i class="fas fa-user-cog"></i> Users</a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <button id="logout-btn" class="btn btn-danger"><i class="fas fa-sign-out-alt"></i> Log Out</button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div id="content" class="main-content">
+            <header class="main-header">
+                <button id="toggle-sidebar" class="toggle-sidebar"><i class="fas fa-bars"></i></button>
+                <h2 id="current-page-title">Dashboard</h2>
+                <div class="user-menu">
+                    <span id="user-role"></span>
+                    <span id="header-user-name"></span>
+                </div>
+            </header>
+
+            <!-- Content Pages -->
+            <div class="page-content">
+                <!-- Dashboard -->
+                <div id="dashboard-page" class="page active">
+                    <div class="dashboard-stats">
+                        <div class="stat-card">
+                            <div class="stat-icon blue">
+                                <i class="fas fa-car"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>Total Vehicles</h3>
+                                <p id="total-vehicles">56</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon green">
+                                <i class="fas fa-truck"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>Active Vehicles</h3>
+                                <p id="active-vehicles">36</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon orange">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>In Maintenance</h3>
+                                <p id="in-maintenance">0</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon red">
+                                <i class="fas fa-times-circle"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>Inactive</h3>
+                                <p id="inactive-vehicles">20</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-section">
+                        <h2 class="section-title">Fleet Overview</h2>
+                        <div class="dashboard-charts">
+                            <div class="chart-container">
+                                <h3>Vehicle Distribution</h3>
+                                <canvas id="location-chart"></canvas>
+                            </div>
+                            
+                            <div class="chart-container">
+                                <h3>Inactive Vehicle Distribution</h3>
+                                <canvas id="inactive-distribution-chart"></canvas>
+                            </div>
+                            
+                            <div class="chart-container">
+                                <h3>Vehicle Types</h3>
+                                <canvas id="service-type-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-section">
+                        <h2 class="section-title">Maintenance & Compliance</h2>
+                        <div class="dashboard-charts maintenance-charts">
+                            <div class="chart-container full-width">
+                                <h3>Kilometers Remaining for Maintenance</h3>
+                                <canvas id="maintenance-km-chart"></canvas>
+                            </div>
+                            <div class="chart-container full-width">
+                                <h3>Kilometers Remaining for Tire Change</h3>
+                                <canvas id="tire-change-chart"></canvas>
+                            </div>
+                            <div class="chart-container full-width">
+                                <h3>Days Remaining for License Renewal</h3>
+                                <canvas id="license-renewal-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Vehicle Details Modal -->
+                    <div id="vehicle-details-modal" class="modal">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <div>
+                                    <h3 class="modal-title">Vehicle Details</h3>
+                                    <div class="license-number">
+                                        <i class="fas fa-id-card"></i> <span>Vehicle ID</span>
+                                    </div>
+                                    <div id="vehicle-details-tabs">
+                                        <button class="tab-btn active" data-tab="info"><i class="fas fa-info-circle"></i> Basic Info</button>
+                                        <button class="tab-btn" data-tab="maintenance"><i class="fas fa-tools"></i> Maintenance</button>
+                                        <button class="tab-btn" data-tab="service"><i class="fas fa-cog"></i> Service</button>
+                                        <button class="tab-btn" data-tab="driver"><i class="fas fa-user"></i> Driver</button>
+                                    </div>
+                                </div>
+                                <button id="close-vehicle-details-modal" class="close-btn">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <div id="vehicle-details-content"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Other Pages -->
+                <div id="vehicles-page" class="page"></div>
+                
+                <!-- Maintenance Page -->
+                <div id="maintenance-page" class="page">
+                    <!-- إضافة بطاقات إحصائية لأنواع الخدمات في بداية صفحة الصيانة -->
+                    <div class="services-stats">
+                        <div class="stat-card services-stat">
+                            <div class="stat-icon purple">
+                                <i class="fas fa-car-alt"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>Total Vehicles</h3>
+                                <p id="total-vehicles-services">0</p>
+                                <span class="stat-percentage" id="total-vehicles-percentage">100%</span>
+                            </div>
+                        </div>
+                        <div class="stat-card services-stat">
+                            <div class="stat-icon blue">
+                                <i class="fas fa-tools"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>Maintenance</h3>
+                                <p id="maintenance-count">0</p>
+                                <span class="stat-percentage" id="maintenance-percentage">0%</span>
+                            </div>
+                        </div>
+                        <div class="stat-card services-stat">
+                            <div class="stat-icon orange">
+                                <i class="fas fa-tachometer-alt"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>Tire Change</h3>
+                                <p id="tires-count">0</p>
+                                <span class="stat-percentage" id="tires-percentage">0%</span>
+                            </div>
+                        </div>
+                        <div class="stat-card services-stat">
+                            <div class="stat-icon green">
+                                <i class="fas fa-id-card"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>License Renewal</h3>
+                                <p id="license-count">0</p>
+                                <span class="stat-percentage" id="license-percentage">0%</span>
+                            </div>
+                        </div>
+                        <div class="stat-card services-stat">
+                            <div class="stat-icon red">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>Critical Services</h3>
+                                <p id="critical-count">0</p>
+                                <span class="stat-percentage" id="critical-percentage">0%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- تعديل قسم الخدمات القادمة لإزالة زر التبديل وإظهار المحتوى دائماً -->
+                    <div class="upcoming-services">
+                        <div class="upcoming-services-header">
+                            <h3>🔜 Upcoming Services 🔧</h3>
+                            <!-- تم إزالة زر التبديل من هنا -->
+                        </div>
+                        <div id="upcoming-services-content">
+                            <div class="services-controls">
+                                <div class="services-actions">
+                                    <!-- ترتيب الأزرار من اليمين إلى اليسار -->
+                                    <button class="btn btn-sm btn-success" id="export-excel-btn" data-filter="all" data-status="all" data-columns-changed="false" onclick="window.exportToExcel(); return false;">
+                                        <i class="fas fa-file-excel"></i> Export to Excel
+                                    </button>
+                                    
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-secondary dropdown-toggle" id="manage-columns-btn">
+                                            <i class="fas fa-columns"></i> Manage Columns <i class="fas fa-caret-down ml-1"></i>
+                                        </button>
+                                        <div class="dropdown-content" id="column-management-dropdown">
+                                            <div class="column-options">
+                                                <div class="column-option">
+                                                    <input type="checkbox" id="col-vehicle" data-column="vehicle" checked>
+                                                    <label for="col-vehicle">Vehicle</label>
+                                                </div>
+                                                <div class="column-option">
+                                                    <input type="checkbox" id="col-service-type" data-column="serviceType" checked>
+                                                    <label for="col-service-type">Service Type</label>
+                                                </div>
+                                                <div class="column-option">
+                                                    <input type="checkbox" id="col-expected-date" data-column="expectedDate" checked>
+                                                    <label for="col-expected-date">Expected Date</label>
+                                                </div>
+                                                <div class="column-option">
+                                                    <input type="checkbox" id="col-status" data-column="status" checked>
+                                                    <label for="col-status">Status</label>
+                                                </div>
+                                                <div class="column-option">
+                                                    <input type="checkbox" id="col-remaining" data-column="remaining" checked>
+                                                    <label for="col-remaining">Remaining Distance</label>
+                                                </div>
+                                                <div class="column-option status-actions">
+                                                    <button id="reset-columns" class="btn btn-sm btn-primary">Reset to Default</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-secondary dropdown-toggle" id="service-type-filter-btn">
+                                            <i class="fas fa-cog"></i> Service Type <i class="fas fa-caret-down ml-1"></i>
+                                        </button>
+                                        <div class="dropdown-content">
+                                            <div id="service-type-filter-options" class="column-options">
+                                                <div class="column-option">
+                                                    <input type="checkbox" id="type-maintenance" value="maintenance" data-column="maintenance" checked>
+                                                    <label for="type-maintenance">Maintenance</label>
+                                                </div>
+                                                <div class="column-option">
+                                                    <input type="checkbox" id="type-tires" value="tires" data-column="tires" checked>
+                                                    <label for="type-tires">Tire Change</label>
+                                                </div>
+                                                <div class="column-option">
+                                                    <input type="checkbox" id="type-license" value="license" data-column="license" checked>
+                                                    <label for="type-license">License Renewal</label>
+                                                </div>
+                                                <div class="column-option status-actions">
+                                                    <button id="select-all-types" class="btn btn-sm btn-primary">Select All</button>
+                                                    <button id="clear-all-types" class="btn btn-sm btn-secondary">Clear All</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-secondary dropdown-toggle" id="status-filter-btn">
+                                            <i class="fas fa-filter"></i> Status Filter <i class="fas fa-caret-down ml-1"></i>
+                                        </button>
+                                        <div class="dropdown-content">
+                                            <div id="status-filter-options" class="column-options">
+                                                <div class="column-option">
+                                                    <input type="checkbox" id="status-required" value="required" data-column="required" checked>
+                                                    <label for="status-required">Required</label>
+                                                </div>
+                                                <div class="column-option">
+                                                    <input type="checkbox" id="status-upcoming" value="upcoming" data-column="upcoming" checked>
+                                                    <label for="status-upcoming">Upcoming</label>
+                                                </div>
+                                                <div class="column-option">
+                                                    <input type="checkbox" id="status-good" value="good" data-column="good">
+                                                    <label for="status-good">Good</label>
+                                                </div>
+                                                <div class="column-option status-actions">
+                                                    <button id="select-all-statuses" class="btn btn-sm btn-primary">Select All</button>
+                                                    <button id="clear-all-statuses" class="btn btn-sm btn-secondary">Clear All</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- إضافة زر استعادة الإعدادات الافتراضية -->
+                                    <button class="btn btn-sm btn-primary" id="reset-services-default-btn">
+                                        <i class="fas fa-undo"></i> Reset to Default
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="table-responsive">
+                                <table id="upcoming-services-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Vehicle</th>
+                                            <th>Service Type</th>
+                                            <th>Expected Date</th>
+                                            <th>Status</th>
+                                            <th>Remaining Distance</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+    
+                <div id="fuel-page" class="page"></div>
+                <div id="drivers-page" class="page"></div>
+                
+                <!-- Reports Page -->
+                <div id="reports-page" class="page">
+                    <div class="report-filters">
+                        <div class="filter-group">
+                            <label for="report-type">Report Type</label>
+                            <select id="report-type">
+                                <option value="">Select Report Type</option>
+                                <option value="vehicles">Vehicles Report</option>
+                                <option value="maintenance">Maintenance Report</option>
+                                <option value="fuel">Fuel Report</option>
+                                <option value="drivers">Drivers Report</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="date-from">From Date</label>
+                            <input type="date" id="date-from">
+                        </div>
+                        <div class="filter-group">
+                            <label for="date-to">To Date</label>
+                            <input type="date" id="date-to">
+                        </div>
+                        <div class="filter-group">
+                            <label for="export-format">Export Format</label>
+                            <select id="export-format">
+                                <option value="html">HTML</option>
+                                <option value="pdf">PDF</option>
+                            </select>
+                        </div>
+                        <div class="filter-actions">
+                            <button id="generate-report-btn" class="btn btn-primary"><i class="fas fa-sync-alt"></i> Generate Report</button>
+                            <button id="export-report-btn" class="btn btn-success"><i class="fas fa-download"></i> Export Report</button>
+                        </div>
+                    </div>
+                    <div id="report-content" class="report-content"></div>
+                </div>
+                
+                <div id="users-page" class="page"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load Modules -->
+    <script type="module" src="script.js"></script>
+</body>
+</html>
